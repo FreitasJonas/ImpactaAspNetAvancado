@@ -7,6 +7,7 @@ using Empresa.Mvc.ViewModels;
 using Empresa.Repositorios.SqlServer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,11 +17,13 @@ namespace Empresa.Mvc.Controllers
     {
         private EmpresaDbContext _db;
         private IDataProtector _protectorProvider;
+        private string _tipoAutenticacao;
 
         public LoginController(EmpresaDbContext _db, IDataProtectionProvider protectionProvider, IConfiguration configuration)
         {
             this._db = _db;
             _protectorProvider = protectionProvider.CreateProtector(configuration.GetSection("ChaveCriptografia").Value);
+            _tipoAutenticacao = configuration.GetSection("TipoAuthenticacao").Value;
         }
 
 
@@ -33,7 +36,6 @@ namespace Empresa.Mvc.Controllers
         [HttpPost]
         public IActionResult Index(LoginViewModel viewModel)
         {
-
             if (!ModelState.IsValid)
             {
                 return View(viewModel);
@@ -46,12 +48,35 @@ namespace Empresa.Mvc.Controllers
                 ModelState.AddModelError("", "Usuário/Senha incorreto");
                 return View(viewModel);
             }
-            else
+
+            var claims = new List<Claim>
             {
-                                    
-            }
+                new Claim(ClaimTypes.Name, contato.Nome),
+                new Claim(ClaimTypes.Email, contato.Email),
+
+                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim(ClaimTypes.Role, "Vendedor"),
+                new Claim("Contato", "Criar"),
+            };
+
+            var identidade = new ClaimsIdentity(claims, _tipoAutenticacao);
+            var principal = new ClaimsPrincipal(identidade);
+            HttpContext.Authentication.SignInAsync(_tipoAutenticacao, principal);
             
             return RedirectToAction("Index", "Login");
         }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Authentication.SignOutAsync(_tipoAutenticacao);
+            return RedirectToAction("Index", "Home");
+        }
+
+        public IActionResult AcessoNegado()
+        {
+            return View();
+        }
+
+
     }
 }

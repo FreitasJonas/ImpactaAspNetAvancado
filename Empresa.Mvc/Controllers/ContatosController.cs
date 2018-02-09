@@ -7,6 +7,7 @@ using Empresa.Repositorios.SqlServer;
 using Empresa.Dominio;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -29,12 +30,15 @@ namespace Empresa.Mvc.Controllers
             return View(_db.Contatos.OrderBy(c => c.Nome).ToList());
         }
 
+        [Authorize(Roles = "Admin, Corretor")] //Admin ou Corretor
         public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Corretor")] //Admin e corretor
+        [Authorize(Roles = "Admin")]
         public IActionResult Create(Contato contato)
         {
             contato.Senha = _protectorProvider.Protect(contato.Senha);
@@ -43,7 +47,5 @@ namespace Empresa.Mvc.Controllers
 
             return RedirectToAction("Index");
         }
-
-
     }
 }
