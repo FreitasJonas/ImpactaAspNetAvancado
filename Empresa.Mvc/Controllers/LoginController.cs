@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Empresa.Mvc.ViewModels;
 using Empresa.Repositorios.SqlServer;
-using Empresa.Dominio;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 
@@ -12,38 +12,41 @@ using Microsoft.Extensions.Configuration;
 
 namespace Empresa.Mvc.Controllers
 {
-    public class ContatosController : Controller
+    public class LoginController : Controller
     {
         private EmpresaDbContext _db;
         private IDataProtector _protectorProvider;
 
-        public ContatosController(EmpresaDbContext _db, IDataProtectionProvider protectionProvider, IConfiguration configuration)
+        public LoginController(EmpresaDbContext _db, IDataProtectionProvider protectionProvider, IConfiguration configuration)
         {
             this._db = _db;
             _protectorProvider = protectionProvider.CreateProtector(configuration.GetSection("ChaveCriptografia").Value);
         }
-        
+
+
         // GET: /<controller>/
         public IActionResult Index()
-        {
-            return View(_db.Contatos.OrderBy(c => c.Nome).ToList());
-        }
-
-        public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
-        public IActionResult Create(Contato contato)
-        {
-            contato.Senha = _protectorProvider.Protect(contato.Senha);
-            _db.Contatos.Add(contato);
-            _db.SaveChanges();
+        public IActionResult Index(LoginViewModel viewModel)
+        {            
+            var contato = _db.Contatos.Where(c => c.Email == viewModel.Email && _protectorProvider.Unprotect(c.Senha) == viewModel.Senha).SingleOrDefault();
 
-            return RedirectToAction("Index");
+            if (contato == null)
+            {
+                ModelState.AddModelError("", "Usuário/Senha incorreto");
+                return View(viewModel);
+            }
+            else
+            {
+                                    
+            }
+
+
+            return RedirectToAction("Index", "Login");
         }
-
-
     }
 }
