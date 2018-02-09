@@ -4,11 +4,11 @@ namespace Empresa.Mvc.ViewModels
 {
     public class LoginViewModel
     {
-        [Required]
+        [Required(ErrorMessage = "Email é obrigatório")]
         [EmailAddress]
         public string Email { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Senha é obrigatória")]
         [DataType(DataType.Password)]
         public string Senha { get; set; }
     }

@@ -32,7 +32,13 @@ namespace Empresa.Mvc.Controllers
 
         [HttpPost]
         public IActionResult Index(LoginViewModel viewModel)
-        {            
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return View(viewModel);
+            }   
+               
             var contato = _db.Contatos.Where(c => c.Email == viewModel.Email && _protectorProvider.Unprotect(c.Senha) == viewModel.Senha).SingleOrDefault();
 
             if (contato == null)
@@ -44,8 +50,7 @@ namespace Empresa.Mvc.Controllers
             {
                                     
             }
-
-
+            
             return RedirectToAction("Index", "Login");
         }
     }
