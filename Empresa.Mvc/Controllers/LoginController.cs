@@ -54,7 +54,7 @@ namespace Empresa.Mvc.Controllers
                 new Claim(ClaimTypes.Name, contato.Nome),
                 new Claim(ClaimTypes.Email, contato.Email),
 
-                new Claim(ClaimTypes.Role, "Admin"),
+                //new Claim(ClaimTypes.Role, "Admin"),
                 new Claim(ClaimTypes.Role, "Vendedor"),
                 new Claim("Contato", "Criar"),
             };

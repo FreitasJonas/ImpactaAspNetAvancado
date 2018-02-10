@@ -37,10 +37,17 @@ namespace Empresa.Mvc.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Corretor")] //Admin e corretor
+        //[Authorize(Roles = "Corretor")] //Admin e corretor
         [Authorize(Roles = "Admin")]
         public IActionResult Create(Contato contato)
         {
+            var podeCriar = User.HasClaim("Contato", "Criar");
+            
+            if (!podeCriar)
+            {
+                RedirectToAction("AcessoNegado", "Login");
+            }
+
             contato.Senha = _protectorProvider.Protect(contato.Senha);
             _db.Contatos.Add(contato);
             _db.SaveChanges();

@@ -7,7 +7,7 @@
 <h2>Index</h2>
 
 <p>
-    @if (User.Identity.IsAuthenticated)
+    @if (User.IsInRole("Admin"))
     {
         @Html.ActionLink("Create New", "Create")
     }    
