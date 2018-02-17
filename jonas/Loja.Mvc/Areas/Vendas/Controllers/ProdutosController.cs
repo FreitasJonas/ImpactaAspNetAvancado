@@ -7,19 +7,22 @@ using Loja.Repositorios.SqlServer.EF;
 using Loja.Mvc.Helpers;
 using Loja.Mvc.Areas.Vendas.Models;
 using System;
+using Microsoft.AspNet.SignalR;
+using Loja.Mvc.Hubs;
 
 namespace Loja.Mvc.Areas.Vendas.Controllers
 {
     public class ProdutosController : Controller
     {
         // ToDo: design pattern Unity of Work.
-        private LojaDbContext db = new LojaDbContext();
+        private LojaDbContext _db = new LojaDbContext();
+        private IHubContext _leilaoHub = GlobalHost.ConnectionManager.GetHubContext<LeilaoHub>();
 
         // GET: Produtos
         public ActionResult Index()
         {
             //throw new Exception("Erro na listagem de produtos.");
-            return View(Mapeamento.Mapear(db.Produtos.ToList()));
+            return View(Mapeamento.Mapear(_db.Produtos.ToList()));
         }
 
         // GET: Produtos/Details/5
@@ -29,7 +32,7 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Produto produto = db.Produtos.Find(id);
+            Produto produto = _db.Produtos.Find(id);
             if (produto == null)
             {
                 return HttpNotFound();
@@ -40,7 +43,7 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
         // GET: Produtos/Create
         public ActionResult Create()
         {
-            return View(Mapeamento.Mapear(new Produto(), db.Categorias.ToList()));
+            return View(Mapeamento.Mapear(new Produto(), _db.Categorias.ToList()));
         }
 
         // POST: Produtos/Create
@@ -52,8 +55,8 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Produtos.Add(Mapeamento.Mapear(viewModel, db));
-                db.SaveChanges();
+                _db.Produtos.Add(Mapeamento.Mapear(viewModel, _db));
+                _db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
@@ -68,14 +71,14 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
-            Produto produto = db.Produtos.Find(id);
+            Produto produto = _db.Produtos.Find(id);
 
             if (produto == null)
             {
                 return HttpNotFound();
             }
 
-            return View(Mapeamento.Mapear(produto, db.Categorias.ToList()));
+            return View(Mapeamento.Mapear(produto, _db.Categorias.ToList()));
         }
 
         // POST: Produtos/Edit/5
@@ -87,15 +90,18 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
         {
             if (ModelState.IsValid)
             {
-                var produto = db.Produtos.Find(viewModel.Id);
+                var produto = _db.Produtos.Find(viewModel.Id);
 
-                Mapeamento.Mapear(viewModel, produto, db);
+                Mapeamento.Mapear(viewModel, produto, _db);
 
                 //db.Entry(produto).State = EntityState.Modified;
                 //db.Entry(produto).CurrentValues.SetValues(viewModel);
                 //produto.Categoria = db.Categorias.Find(viewModel.CategoriaId);
 
-                db.SaveChanges();
+                _db.SaveChanges();
+
+                _leilaoHub.Clients.All.atualizarOfertas();
+
                 return RedirectToAction("Index");
             }
             return View(viewModel);
@@ -109,7 +115,7 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
-            Produto produto = db.Produtos.Find(id);
+            Produto produto = _db.Produtos.Find(id);
 
             if (produto == null)
             {
@@ -124,9 +130,9 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Produto produto = db.Produtos.Find(id);
-            db.Produtos.Remove(produto);
-            db.SaveChanges();
+            Produto produto = _db.Produtos.Find(id);
+            _db.Produtos.Remove(produto);
+            _db.SaveChanges();
             return RedirectToAction("Index");
         }
 
@@ -134,7 +140,7 @@ namespace Loja.Mvc.Areas.Vendas.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                _db.Dispose();
             }
             base.Dispose(disposing);
         }
